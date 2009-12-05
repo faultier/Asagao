@@ -18,10 +18,10 @@ sub import {
         __ASAGAO__($caller);
     };
 
-    *{"$caller\::get"}  = \&_get;
-    *{"$caller\::post"} = \&_post;
-    *{"$caller\::put"}  = \&_put;
-    *{"$caller\::delete"}  = \&_delete;
+    *{"$caller\::get"}    = sub { _set_handler( $caller, 'get',    @_ ) };
+    *{"$caller\::post"}   = sub { _set_handler( $caller, 'post',   @_ ) };
+    *{"$caller\::put"}    = sub { _set_handler( $caller, 'put',    @_ ) };
+    *{"$caller\::delete"} = sub { _set_handler( $caller, 'delete', @_ ) };
 }
 
 sub __ASAGAO__ {
@@ -31,16 +31,21 @@ sub __ASAGAO__ {
     "ASAGAO";
 }
 
-sub _get {
-}
-
-sub _post {
-}
-
-sub _put {
-}
-
-sub _delete {
+sub _set_handler {
+    my ( $pkg, $method, $path, $code ) = @_;
+    my ($name) = $path =~ m/^\/(.*)/;
+    $name ||= 'index';
+    $name =~ s/\//_/g;
+    $name = lc($name);
+    my $handler    = "$method\_$name";
+    my $dispatcher = "$method\_dispatcher";
+    $pkg->meta->add_method( $handler, $code );
+    $pkg->$dispatcher()->add_rule(
+        Path::Dispatcher::Rule::Regex->new(
+            regex => qr/^$path/,
+            block => sub { shift->$handler() },
+        )
+    );
 }
 
 1;

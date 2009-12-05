@@ -1,6 +1,5 @@
 package Asagao;
 use Any::Moose;
-use Plack::Server::Standalone;
 our $VERSION = '0.01';
 
 use Asagao::Default;
@@ -27,15 +26,25 @@ sub import {
 }
 
 sub __ASAGAO__ {
-    my $file = shift;
-    my $app  = Asagao::Default->psgi_app;
-    if ( $file eq $0 ) {
-        my $server = Plack::Server::Standalone->new;
-        $server->run($app);
+    if ( shift eq $0 ) {
+        require Getopt::Long;
+        GetOptions(
+            'host=s'               => \my $host,
+            'port=i'               => \my $port,
+            'timeout=i'            => \my $timeout,
+            'max-keepalive-reqs=i' => \my $max_keepalive_reqs,
+            'keepalive-timeout'    => \my $keepalive_timeout
+        );
+        Asagao::Default->start_server(
+            host                => $host               || '0.0.0.0',
+            port                => $port               || 4423,
+            timeout             => $timeout            || 300,
+            'max-keealive-reqs' => $max_keepalive_reqs || 1,
+            'keepalive-timeout' => $keepalive_timeout  || 2,
+        );
+        exit 0;
     }
-    else {
-        return $app;
-    }
+    Asagao::Default->psgi_app;
 }
 
 1;

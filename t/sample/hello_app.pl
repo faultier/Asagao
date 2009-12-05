@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use Asagao;
 
-get index => sub {
+get '/' => sub {
     'Hello, Asagao World!';
 };
 

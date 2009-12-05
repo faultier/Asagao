@@ -2,7 +2,8 @@ use inc::Module::Install;
 name 'Asagao';
 all_from 'lib/Asagao.pm';
 
-# requires '';
+requires 'Any::Moose';
+requires 'Plack';
 
 tests 't/*.t';
 author_tests 'xt';

@@ -107,6 +107,7 @@ sub psgi_app {
         $app->_run();
     };
     if ( $class->config->{static} ) {
+        Plack::Middleware::Static->use or croak $@;
         $psgi_app = Plack::Middleware::Static->wrap(
             $psgi_app,
             path => qr{^/(images|js|css)/},

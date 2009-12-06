@@ -14,7 +14,17 @@ extends( any_moose('::Object'), 'Class::Data::Inheritable' );
 __PACKAGE__->mk_classdata( $_ . '_dispatcher' ) foreach (qw(get post put delete));
 __PACKAGE__->mk_classdata( base_path        => '' );
 __PACKAGE__->mk_classdata( infile_templates => {} );
-__PACKAGE__->mk_classdata( config           => { template => { include_path => ['views'], }, } );
+__PACKAGE__->mk_classdata(
+    config => {
+        template => {
+            include_path  => ['views'],
+            template_args => {
+                PLACK_VERSION  => $Plack::VERSION,
+                ASAGAO_VERSION => $Asagao::Base::VERSION,
+            },
+        },
+    }
+);
 
 has req => (
     is       => 'ro',
@@ -209,7 +219,15 @@ sub _run {
 sub _build_template_mt {
     my $self = shift;
     Asagao::Template::MT->use or croak $@;
-    Asagao::Template::MT->new( { include_path => $self->config->{template}->{include_path} } );
+    Asagao::Template::MT->new(
+        {
+            include_path  => $self->config->{template}->{include_path},
+            template_args => {
+                %{ $self->config->{template}->{template_args} || {} },
+                base_path => $self->base_path,
+            },
+        }
+    );
 }
 
 sub mt {

@@ -1,0 +1,45 @@
+インストール
+
+まだCPANにあげるとかそんな段階でもないので
+
+    % git clone git://github.com/faultier/Asagao.git
+    % cd Asagao
+    % perl Makefile.PL
+    % make && make test
+
+使い方
+
+    # asagao.pl
+    use Asagao;
+
+    get '/' => sub {
+        'Asagao!';
+    };
+
+    __ASAGAO__
+
+これを
+
+    % perl asagao.pl
+
+これで4423ポートでサーバが立ち上がる。Plack::Server::Standaloneと同じオプションを受け付けるよ。
+
+Sinatra::Baseみたいのもある。
+
+    # Hello.pm
+    use Asagao::Base;
+
+    get '/' => sub {
+        my $self = shift;
+        $self->mt( 'Hello, <%= $name %>', { name => 'Asagao' } );
+    };
+
+    __ASAGAO__
+
+    # app.psgi
+    use Hello;
+    my $handler = Hello->psgi_app;
+
+これでplackupすれば動くよ！
+
+そのうちサンプルを書く予定。多分。覚えてたら。

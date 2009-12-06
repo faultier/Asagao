@@ -9,6 +9,13 @@ requires 'Plack::Request';
 requires 'Class::Data::Inheritable';
 requires 'Getopt::Long';
 
+features(
+    'Support MicroTemplate template engine' => [
+        -default => 1,
+        recommends( 'Text::MicroTemplate::Extended' => '0.05' ),
+    ],
+);
+
 tests 't/*.t';
 author_tests 'xt';
 

@@ -1,4 +1,5 @@
 package Asagao::Template::MT;
+use utf8;
 use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
 with 'Asagao::Template';

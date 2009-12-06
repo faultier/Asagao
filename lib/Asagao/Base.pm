@@ -1,4 +1,5 @@
 package Asagao::Base;
+use utf8;
 use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
 use Carp;
@@ -57,13 +58,14 @@ sub init_class {
 }
 
 sub import {
-    my $class = shift;
+    my $class  = shift;
     my $caller = caller;
 
     return unless $class eq 'Asagao::Base';
 
     strict->import;
     warnings->import;
+    utf8->import;
 
     init_class($caller);
 
@@ -242,7 +244,9 @@ sub mt {
             $self->template_mt->set_infile_template( $tmpl => $self->infile_templates->{$tmpl} );
         }
     }
-    $self->template_mt->$method( $tmpl, $args );
+    my $content = $self->template_mt->$method( $tmpl, $args );
+    utf8::encode($content);
+    $content;
 }
 
 no Any::Moose;

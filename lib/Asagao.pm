@@ -1,11 +1,11 @@
 package Asagao;
 use Any::Moose;
-our $VERSION = '0.01';
-
 use Asagao::Default;
 
+our $VERSION = '0.01';
+
 sub import {
-    my $class  = shift;
+    my ( $class, $target ) = @_;
     my $caller = caller;
 
     strict->import;
@@ -14,6 +14,7 @@ sub import {
     any_moose()->import( { into_level => 1 } );
 
     no strict 'refs';
+    no warnings 'redefine';
     *{"$caller\::__ASAGAO__"} = sub {
         use strict;
         my ( $pkg, $file ) = caller;
@@ -26,9 +27,9 @@ sub import {
 }
 
 sub __ASAGAO__ {
-    if ( shift eq $0 ) {
+    if ( $_[0] eq $0 ) {
         require Getopt::Long;
-        GetOptions(
+        Getopt::Long::GetOptions(
             'host=s'               => \my $host,
             'port=i'               => \my $port,
             'timeout=i'            => \my $timeout,

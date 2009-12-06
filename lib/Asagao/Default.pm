@@ -1,7 +1,5 @@
 package Asagao::Default;
 
-use Asagao::Class;
-extends 'Asagao::Base';
+use Asagao::Base;
 
 __ASAGAO__
-

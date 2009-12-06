@@ -2,7 +2,7 @@
 allow = refs
 
 [TestingAndDebugging::RequireUseStrict]
-equivalent_modules = Any::Moose Asagao Asagao::Class
+equivalent_modules = Any::Moose Asagao Asagao::Base
 
 [TestingAndDebugging::RequireUseWarnings]
-equivalent_modules = Any::Moose Asagao Asagao::Class
+equivalent_modules = Any::Moose Asagao Asagao::Base

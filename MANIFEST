@@ -27,9 +27,9 @@ MANIFEST			This list of files
 META.yml
 README
 t/00_compile.t
-t/01_simple.t
 t/11_template_mt.t
-t/asagao_base.t
+t/20_base.t
+t/91_simple.t
 t/sample/hello_app.pl
 t/sample/views/hello.mt
 xt/01_podspell.t

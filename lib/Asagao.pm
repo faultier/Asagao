@@ -20,10 +20,16 @@ sub import {
         my ( $pkg, $file ) = caller;
         __ASAGAO__($file);
     };
-    *{"$caller\::get"}    = sub { Asagao::Default::get(@_) };
-    *{"$caller\::post"}   = sub { Asagao::Default::post(@_) };
-    *{"$caller\::put"}    = sub { Asagao::Default::put(@_) };
-    *{"$caller\::delete"} = sub { Asagao::Default::delete(@_) };
+    *{"$caller\::get"}       = \&Asagao::Default::get;
+    *{"$caller\::post"}      = \&Asagao::Default::post;
+    *{"$caller\::put"}       = \&Asagao::Default::put;
+    *{"$caller\::delete"}    = \&Asagao::Default::delete;
+    *{"$caller\::set"}       = \&Asagao::Default::set;
+    *{"$caller\::template"}  = \&Asagao::Default::template;
+    *{"$caller\::not_found"} = sub (&) {
+        my $code = shift;
+        Asagao::Default::not_found { $code->() };
+    };
 }
 
 sub __ASAGAO__ {

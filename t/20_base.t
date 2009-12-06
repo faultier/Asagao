@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 10;
 
 BEGIN { use_ok 'Asagao::Base' }
 
@@ -12,12 +12,15 @@ BEGIN { use_ok 'Asagao::Base' }
 
     package TestApp;
     use Asagao::Base;
-    set views => ['t/sample/views'];
+    set views         => ['t/sample/views'];
+    template gutentag => sub {
+        'Guten Tag, <%= $name %>.';
+    };
     __ASAGAO__;
 }
 
 {
-    can_ok( TestApp, qw(get post put delete) );
+    can_ok( TestApp, qw(get post put delete template) );
 }
 
 use HTTP::Request::Common;
@@ -39,5 +42,6 @@ sub create_testapp {
     my $app = create_testapp();
     can_ok( $app, qw(mt) );
     is $app->mt( 'Hi, <%= $name %>.', { name => 'Taro' } ), 'Hi, Taro.';
-    is $app->mt( ':hello', { name => 'Taro' } ), "Hello, Taro.\n";
+    is $app->mt( ':hello',            { name => 'Taro' } ), "Hello, Taro.\n";
+    is $app->mt( ':gutentag',         { name => 'Taro' } ), 'Guten Tag, Taro.';
 }

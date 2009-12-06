@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 9;
 
 BEGIN { use_ok 'Asagao::Base' }
 
@@ -9,28 +9,35 @@ BEGIN { use_ok 'Asagao::Base' }
 }
 
 {
+
     package TestApp;
     use Asagao::Base;
+    set views => ['t/sample/views'];
     __ASAGAO__;
 }
 
 {
-    ok( TestApp->can('get') );
-    ok( TestApp->can('post') );
-    ok( TestApp->can('put') );
-    ok( TestApp->can('delete') );
-    ok( TestApp->can('get_dispatcher') );
-    ok( TestApp->can('post_dispatcher') );
-    ok( TestApp->can('put_dispatcher') );
-    ok( TestApp->can('delete_dispatcher') );
+    can_ok( TestApp, qw(get post put delete) );
+}
+
+use HTTP::Request::Common;
+use HTTP::Message::PSGI;
+use Plack::Request;
+
+sub create_testapp {
+    my $env = GET('http://www.example.org/')->to_psgi;
+    my $req = Plack::Request->new($env);
+    TestApp->new( { req => $req } );
 }
 
 {
-    use HTTP::Request::Common;
-    use HTTP::Message::PSGI;
-    use Plack::Request;
-    my $env = GET('http://www.example.org/')->to_psgi;
-    my $req = Plack::Request->new($env);
-    my $app = TestApp->new( { req => $req } );
-    ok( $app->can('_run') );
+    my $app = create_testapp();
+    can_ok( $app, qw(_run) );
+}
+
+{
+    my $app = create_testapp();
+    can_ok( $app, qw(mt) );
+    is $app->mt( 'Hi, <%= $name %>.', { name => 'Taro' } ), 'Hi, Taro.';
+    is $app->mt( ':hello', { name => 'Taro' } ), "Hello, Taro.\n";
 }

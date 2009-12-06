@@ -34,7 +34,7 @@ my $mt;
 }
 
 {
-    $mt = Asagao::Template::MT->new( { include_path => ['t/sample/view'] } );
+    $mt = Asagao::Template::MT->new( { include_path => ['t/sample/views'] } );
     is $mt->render('hello', { name => 'Taro' } ), "Hello, Taro.\n";
     $mt = undef;
 }

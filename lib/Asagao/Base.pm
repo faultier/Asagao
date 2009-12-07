@@ -2,6 +2,7 @@ package Asagao::Base;
 use utf8;
 use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
+use Asagao::Context;
 use Carp;
 use Path::Dispatcher;
 use Plack::Request;
@@ -25,19 +26,6 @@ __PACKAGE__->mk_classdata(
             },
         },
     }
-);
-
-has req => (
-    is       => 'ro',
-    isa      => 'Plack::Request',
-    required => 1,
-);
-
-has res => (
-    is      => 'ro',
-    isa     => 'Plack::Response',
-    lazy    => 1,
-    default => sub { Plack::Response->new },
 );
 
 has template_mt => (
@@ -88,25 +76,24 @@ sub import {
         my $code = shift;
         $caller->meta->add_method(
             handle_not_found => sub {
-                my $self = shift;
-                my $body = $code->();
-                $self->res->body($body);
-                $self->res->status(404) unless $self->res->status;
+                my ( $self, $context ) = @_;
+                my $body = $code->($context);
+                $context->res->body($body);
+                $context->res->status(404) unless $context->res->status;
             }
-        ) unless $caller->meta->has_method('handle_not_found');
+        );
     };
 }
 
 sub psgi_app {
     my $class    = shift;
+    my $app      = $class->new(@_);
     my $psgi_app = sub {
         my $env = shift;
         if ( my $base_path = $class->base_path ) {
             $env->{PATH_INFO} =~ s/^$base_path//;
         }
-        my $req = Plack::Request->new($env);
-        my $app = $class->new( { req => $req } );
-        $app->_run();
+        $app->run($env);
     };
     if ( $class->config->{static} ) {
         Plack::Middleware::Static->use or croak $@;
@@ -131,11 +118,11 @@ sub __ASAGAO__ {
     no strict 'refs';
     $caller->meta->add_method(
         handle_not_found => sub {
-            my $self = shift;
-            $self->res->status(404);
-            $self->res->body('Not Found');
+            my ( $self, $context ) = @_;
+            $context->res->status(404);
+            $context->res->body('Not Found');
         }
-    ) unless $caller->meta->has_method('handle_not_found');
+    );
     Any::Moose::unimport;
     $caller->meta->make_immutable( inline_destructor => 1 );
     "ASAGAO";
@@ -189,34 +176,35 @@ sub _set_template {
     $class->infile_templates->{$label} = $generator->();
 }
 
-sub _run {
-    my $self       = shift;
-    my $disp_attr  = lc( $self->req->method ) . '_dispatcher';
+sub run {
+    my ( $self, $env ) = @_;
+    my $context    = Asagao::Context->new( { app => $self, req => Plack::Request->new($env) } );
+    my $disp_attr  = lc( $context->req->method ) . '_dispatcher';
     my $dispatcher = $self->$disp_attr();
     local $@;
     eval {
         my $content;
         if ($dispatcher) {
-            my $dispatch = $dispatcher->dispatch( $self->req->env->{PATH_INFO} );
+            my $dispatch = $dispatcher->dispatch( $context->req->env->{PATH_INFO} );
             if ( $dispatch->has_matches ) {
-                $content = $dispatch->run($self);
+                $content = $dispatch->run($context);
             }
         }
         if ($content) {
-            $self->res->body($content);
+            $context->res->body($content);
         }
         else {
-            $self->handle_not_found;
+            $self->handle_not_found($context);
         }
     };
     if ($@) {
-        $self->res->body('Internal Server Error');
-        $self->res->status(500);
+        $context->res->body('Internal Server Error');
+        $context->res->status(500);
         carp($@);
     }
-    $self->res->status(200)               unless $self->res->status;
-    $self->res->content_type('text/html') unless $self->res->content_type;
-    $self->res->finalize;
+    $context->res->status(200)               unless $context->res->status;
+    $context->res->content_type('text/html') unless $context->res->content_type;
+    $context->res->finalize;
 }
 
 sub _build_template_mt {

@@ -27,7 +27,7 @@ sub create_context {
 
 {
     my $ctx = create_context();
-    can_ok( $ctx, qw(params));
+    can_ok( $ctx, qw(param));
     can_ok( $ctx, qw(body status content_type redirect finalize));
 }
 

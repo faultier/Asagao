@@ -6,7 +6,6 @@ has req => (
     is       => 'ro',
     isa      => 'Plack::Request',
     required => 1,
-    handles  => [qw(params)],
 );
 
 has res => (
@@ -24,6 +23,15 @@ has app => (
     handles  => [qw(mt)],
     weak_ref => 1,
 );
+
+sub param {
+    my ($self, $key) = @_;
+    my $value = $self->req->param($key);
+    if ( $value && !utf8::is_utf8($value) ) {
+        utf8::decode($value);
+    }
+    $value;
+}
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;

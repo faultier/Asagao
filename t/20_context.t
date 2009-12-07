@@ -1,4 +1,4 @@
-use Test::More tests => 5;
+use Test::More tests => 7;
 
 BEGIN { use_ok 'Asagao::Context' }
 
@@ -23,6 +23,12 @@ sub create_context {
     my $req = Plack::Request->new($env);
     $app = TestApp->new( { req => $req } );
     Asagao::Context->new( { app => $app, req => $req });
+}
+
+{
+    my $ctx = create_context();
+    can_ok( $ctx, qw(params));
+    can_ok( $ctx, qw(body status content_type redirect finalize));
 }
 
 {

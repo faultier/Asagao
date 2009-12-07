@@ -191,20 +191,20 @@ sub run {
             }
         }
         if ($content) {
-            $context->res->body($content);
+            $context->body($content);
         }
         else {
             $self->handle_not_found($context);
         }
     };
     if ($@) {
-        $context->res->body('Internal Server Error');
-        $context->res->status(500);
+        $context->body('Internal Server Error');
+        $context->status(500);
         carp($@);
     }
-    $context->res->status(200)               unless $context->res->status;
-    $context->res->content_type('text/html') unless $context->res->content_type;
-    $context->res->finalize;
+    $context->status(200)               unless $context->status;
+    $context->content_type('text/html') unless $context->content_type;
+    $context->finalize;
 }
 
 sub _build_template_mt {

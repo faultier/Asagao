@@ -24,9 +24,12 @@
 
 これで4423ポートでサーバが立ち上がる。Plack::Server::Standaloneと同じオプションを受け付けるよ。
 
+    % perl asagao.pl --port 8080
+
 Sinatra::Baseみたいのもある。
 
     # Hello.pm
+    package Hello;
     use Asagao::Base;
 
     get '/' => sub {

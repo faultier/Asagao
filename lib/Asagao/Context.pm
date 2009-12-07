@@ -20,6 +20,7 @@ has app => (
     isa      => 'Asagao::Base',
     required => 1,
     handles  => [qw(mt)],
+    weak_ref  => 1,
 );
 
 no Any::Moose;

@@ -6,6 +6,7 @@
     % cd Asagao
     % perl Makefile.PL
     % make && make test
+    % sudo make install
 
 使い方
 
@@ -45,4 +46,4 @@ Sinatra::Baseみたいのもある。
 
 これでplackupすれば動くよ！
 
-そのうちサンプルを書く予定。多分。覚えてたら。
+http://github.com/faultier/AsagaoBBSにサンプルアプリを置いたので見てみてください。

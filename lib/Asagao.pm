@@ -1,8 +1,9 @@
 package Asagao;
 use Any::Moose;
+use Asagao::Base ();
 use Asagao::Default;
 
-our $VERSION = '0.01';
+our $VERSION = $Asagao::Base::VERSION;
 
 sub import {
     my ( $class, $target ) = @_;

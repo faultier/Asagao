@@ -26,9 +26,26 @@ test_psgi
   app    => $app,
   client => sub {
     my $cb = shift;
-    is $cb->( POST 'http://localhost/regex/hoge' )->code, 200;
-    is $cb->( POST 'http://localhost/regex/fuga' )->code, 200;
-    is $cb->( POST 'http://localhost/hoge' )->code,       404;
+    is $cb->( GET 'http://localhost/wildcard/hoge' )->code, 200, '/wildcard/hoge';
+    is $cb->( GET 'http://localhost/wildcard/fuga' )->code, 200, '/wildcard/fuga';
+    is $cb->( GET 'http://localhost/wildcard/' )->code,     404, '/wildcard/';
+  };
+
+test_psgi
+  app    => $app,
+  client => sub {
+    my $cb = shift;
+    is $cb->( GET 'http://localhost/namedparam/faultier' )->content, 'faultier';
+    is $cb->( GET 'http://localhost/namedparam/taro' )->content,     'taro';
+  };
+
+test_psgi
+  app    => $app,
+  client => sub {
+    my $cb = shift;
+    is $cb->( POST 'http://localhost/regex/1' )->code,  200, '/regex/1';
+    is $cb->( POST 'http://localhost/regex/11' )->code, 404, '/regex/11';
+    is $cb->( POST 'http://localhost/regex/' )->code,   404, '/regex/';
   };
 
 done_testing;

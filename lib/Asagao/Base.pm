@@ -146,11 +146,37 @@ sub _set_handler {
     else {
         my ($name) = $path =~ m/^\/(.*)/;
         my @tokens = split( '/', $name );
+        my @keys;
+        @tokens = map {
+            my $token = $_;
+            if ( $token =~ /^:([[:alnum:]]+)$/ ) {
+                $token = qr{^.*$};
+                push @keys, $1;
+            }
+            if ( $token =~ /\*/ ) {
+                $token =~ s/\*/.*/g;
+                $token =~ s/\./\./g;
+                $token = qr{^$token$};
+                push @keys, '_ignore';
+            }
+            else {
+                push @keys, '_ignore';
+            }
+            $token;
+        } @tokens;
         $dispatcher->add_rule(
             Path::Dispatcher::Rule::Tokens->new(
                 tokens    => \@tokens,
                 delimiter => '/',
-                block     => sub { $code->(@_) },
+                block     => sub {
+                    my ( $context, @args ) = @_;
+                    for ( my $i = 1 ; $i <= scalar(@keys) ; $i++ ) {
+                        my $key = $keys[$i-1];
+                        next if $key eq '_ignore';
+                        eval "\$context->req->param($key => \$$i)";
+                    }
+                    $code->($context, @args);
+                },
             )
         );
     }

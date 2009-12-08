@@ -19,8 +19,10 @@ inc/Test/Builder/Module.pm
 inc/Test/More.pm
 lib/Asagao.pm
 lib/Asagao/Base.pm
+lib/Asagao/Config.pm
 lib/Asagao/Context.pm
 lib/Asagao/Default.pm
+lib/Asagao/Role/Singleton.pm
 lib/Asagao/Template.pm
 lib/Asagao/Template/MT.pm
 lib/Asagao/Template/TT.pm
@@ -32,7 +34,8 @@ t/00_compile.t
 t/11_template_mt.t
 t/12_template_tt.t
 t/20_context.t
-t/30_base.t
+t/30_config.t
+t/50_base.t
 t/91_simple.t
 t/sample/hello_app.pl
 t/sample/views/hello.mt

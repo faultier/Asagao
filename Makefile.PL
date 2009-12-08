@@ -16,12 +16,11 @@ features(
     ],
     'Use Mouse' => [
         -default => 1,
-        recommends( 'MouseX::AttributeHelpers' => 0 ),
+        recommends( 'MouseX::AttributeHelpers' => '0.04' ),
     ],
     'Use Moose' => [
         -default => 0,
-        recommends( 'Moose' => 0 ),
-        recommends( 'MooseX::AttributeHelpers' => 0 ),
+        recommends( 'MooseX::AttributeHelpers' => '0.22' ),
     ],
 );
 

@@ -2,6 +2,7 @@ package Asagao::Base;
 use utf8;
 use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
+use Asagao::Config;
 use Asagao::Context;
 use Carp;
 use Path::Dispatcher;
@@ -12,27 +13,17 @@ use UNIVERSAL::require;
 our $VERSION = '0.01';
 
 extends( any_moose('::Object'), 'Class::Data::Inheritable' );
-
-__PACKAGE__->mk_classdata( $_ . '_dispatcher' ) foreach (qw(get post put delete));
-__PACKAGE__->mk_classdata( base_path        => '' );
+__PACKAGE__->mk_classdata( $_ . '_dispatcher' ) foreach qw(get post);
 __PACKAGE__->mk_classdata( infile_templates => {} );
-__PACKAGE__->mk_classdata(
-    config => {
-        template => {
-            include_path  => ['views'],
-            template_args => {
-                PLACK_VERSION  => $Plack::VERSION,
-                ASAGAO_VERSION => $Asagao::Base::VERSION,
-            },
-        },
-    }
-);
 
 has template_mt => (
-    is      => 'ro',
-    dase    => 'Asagao::Template',
-    lazy    => 1,
-    builder => '_build_template_mt',
+    is         => 'ro',
+    lazy_build => 1,
+);
+
+has template_tt => (
+    is         => 'ro',
+    lazy_build => 1,
 );
 
 sub init_class {
@@ -86,19 +77,20 @@ sub import {
 sub psgi_app {
     my $class    = shift;
     my $app      = $class->new(@_);
+    my $config   = Asagao::Config->instance;
     my $psgi_app = sub {
         my $env = shift;
-        if ( my $base_path = $class->base_path ) {
+        if ( my $base_path = $config->base_path ) {
             $env->{PATH_INFO} =~ s/^$base_path//;
         }
         $app->run($env);
     };
-    if ( $class->config->{static} ) {
+    if ( $config->static_path ) {
         Plack::Middleware::Static->use or croak $@;
         $psgi_app = Plack::Middleware::Static->wrap(
             $psgi_app,
             path => qr{^/(images|js|css)/},
-            root => $class->config->{static},
+            root => $config->static_path,
         );
     }
     $psgi_app;
@@ -122,8 +114,14 @@ sub __ASAGAO__ {
         }
     );
     Any::Moose::unimport;
-    $caller->meta->make_immutable( inline_destructor => 1 );
+
+    #   $caller->meta->make_immutable( inline_destructor => 1 );
     "ASAGAO";
+}
+
+sub _configure {
+    my $code = shift;
+    $code->( Asagao::Config->instance );
 }
 
 sub _set_handler {
@@ -171,7 +169,7 @@ sub _set_handler {
                     for ( my $i = 1 ; $i <= scalar(@keys) ; $i++ ) {
                         my $key = $keys[ $i - 1 ];
                         next if $key eq '_ignore';
-                        eval "\$context->req->param($key => \$$i)"; ## no critic
+                        eval "\$context->req->param($key => \$$i)";    ## no critic
                     }
                     $code->( $context, @args );
                 },
@@ -183,14 +181,15 @@ sub _set_handler {
 sub _set_option {
     my ( $pkg, $key, $value ) = @_;
     my $class = ref($pkg) || $pkg;
+    my $config = Asagao::Config->instance;
     if ( $key eq 'views' ) {
-        $class->config->{template}->{include_path} = $value;
+        $config->template_include_path($value);
     }
     elsif ( $key eq 'static' ) {
-        $class->config->{static} = $value;
+        $config->static_path($value);
     }
     elsif ( $key eq 'base_path' ) {
-        $class->base_path($value);
+        $config->base_path($value);
     }
 }
 
@@ -198,6 +197,20 @@ sub _set_template {
     my ( $pkg, $label, $generator ) = @_;
     my $class = ref($pkg) || $pkg;
     $class->infile_templates->{$label} = $generator->();
+}
+
+sub BUILD {
+    my $self   = shift;
+    my $config = Asagao::Config->instance;
+    $config->template_include_path( ['views'] ) unless $config->template_include_path;
+    my $tmpl_args = $config->template_args || {};
+    $config->template_args(
+        {
+            %$tmpl_args,
+            PLACK_VERSION  => $Plack::VERSION,
+            ASAGAO_VERSION => $Asagao::Base::VERSION,
+        }
+    );
 }
 
 sub run {
@@ -219,6 +232,11 @@ sub dispatch {
     my $request_method = $context->req->method;
     my $disp_attr      = lc($request_method) . '_dispatcher';
     $disp_attr = 'get_dispatcher' if $request_method eq 'HEAD';
+    unless ( $self->can($disp_attr) ) {
+        $context->body('Method Not Allowd');
+        $context->status(405);
+        return;
+    }
     my $dispatcher = $self->$disp_attr();
     local $@;
     eval {
@@ -244,15 +262,14 @@ sub dispatch {
 }
 
 sub _build_template_mt {
-    my $self = shift;
+    my $self   = shift;
+    my $config = Asagao::Config->instance;
     Asagao::Template::MT->use or croak $@;
     Asagao::Template::MT->new(
         {
-            include_path  => $self->config->{template}->{include_path},
-            template_args => {
-                %{ $self->config->{template}->{template_args} || {} },
-                base_path => $self->base_path,
-            },
+            include_path => $config->template_include_path,
+            template_args =>
+              { %{ $config->template_args || {} }, base_path => $config->base_path, },
         }
     );
 }
@@ -274,15 +291,14 @@ sub mt {
 }
 
 sub _build_template_tt {
-    my $self = shift;
+    my $self   = shift;
+    my $config = Asagao::Config->instance;
     Asagao::Template::TT->use or croak $@;
     Asagao::Template::TT->new(
         {
-            include_path  => $self->config->{template}->{include_path},
-            template_args => {
-                %{ $self->config->{template}->{template_args} || {} },
-                base_path => $self->base_path,
-            },
+            include_path => $config->template_include_path,
+            template_args =>
+              { %{ $config->template_args || {} }, base_path => $config->base_path, },
         }
     );
 }

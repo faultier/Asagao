@@ -9,6 +9,11 @@ has base_path => (
     isa => 'Str',
 );
 
+has static_path => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
 has _template => (
     is      => 'rw',
     isa     => 'HashRef',
@@ -16,7 +21,7 @@ has _template => (
 );
 
 sub template_include_path {
-    my ($self, $value) = @_;
+    my ( $self, $value ) = @_;
     if ($value) {
         croak 'include_path required ArrayRef' unless ref($value) eq 'ARRAY';
         $self->_template->{include_path} = $value;
@@ -25,14 +30,13 @@ sub template_include_path {
 }
 
 sub template_args {
-    my ($self, $value) = @_;
+    my ( $self, $value ) = @_;
     if ($value) {
         croak 'include_path required HashRef' unless ref($value) eq 'HASH';
         $self->_template->{args} = $value;
     }
     $self->_template->{args};
 }
-
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;

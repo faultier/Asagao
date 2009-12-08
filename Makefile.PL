@@ -14,6 +14,15 @@ features(
         -default => 1,
         recommends( 'Text::MicroTemplate::Extended' => '0.05' ),
     ],
+    'Use Mouse' => [
+        -default => 1,
+        recommends( 'MouseX::AttributeHelpers' => 0 ),
+    ],
+    'Use Moose' => [
+        -default => 0,
+        recommends( 'Moose' => 0 ),
+        recommends( 'MooseX::AttributeHelpers' => 0 ),
+    ],
 );
 
 tests 't/*.t';

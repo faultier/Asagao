@@ -171,7 +171,7 @@ sub _set_handler {
                     for ( my $i = 1 ; $i <= scalar(@keys) ; $i++ ) {
                         my $key = $keys[ $i - 1 ];
                         next if $key eq '_ignore';
-                        eval "\$context->req->param($key => \$$i)";
+                        eval "\$context->req->param($key => \$$i)"; ## no critic
                     }
                     $code->( $context, @args );
                 },

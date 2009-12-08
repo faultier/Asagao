@@ -66,10 +66,8 @@ sub import {
         my $caller = caller(0);
         __ASAGAO__($caller);
     };
-    *{"$caller\::get"}    = sub { _set_handler( $caller, 'get',    @_ ) };
-    *{"$caller\::post"}   = sub { _set_handler( $caller, 'post',   @_ ) };
-    *{"$caller\::put"}    = sub { _set_handler( $caller, 'put',    @_ ) };
-    *{"$caller\::delete"} = sub { _set_handler( $caller, 'delete', @_ ) };
+    *{"$caller\::get"}  = sub { _set_handler( $caller, 'get',  @_ ) };
+    *{"$caller\::post"} = sub { _set_handler( $caller, 'post', @_ ) };
     *{"$caller\::set"} = sub { _set_option( $caller, @_ ) };
     *{"$caller\::template"} = sub { _set_template( $caller, @_ ) };
     *{"$caller\::not_found"} = sub (&) {
@@ -150,10 +148,10 @@ sub _set_handler {
         @tokens = map {
             my $token = $_;
             if ( $token =~ /^:([[:alnum:]]+)$/ ) {
-                $token = qr{^.*$};
+                $token = qr{^.+$};
                 push @keys, $1;
             }
-            if ( $token =~ /\*/ ) {
+            elsif ( $token =~ /\*/ ) {
                 $token =~ s/\*/.*/g;
                 $token =~ s/\./\./g;
                 $token = qr{^$token$};
@@ -163,7 +161,7 @@ sub _set_handler {
                 push @keys, '_ignore';
             }
             $token;
-        } @tokens;
+        } grep { $_ && $_ ne '/' } @tokens;
         $dispatcher->add_rule(
             Path::Dispatcher::Rule::Tokens->new(
                 tokens    => \@tokens,
@@ -171,11 +169,11 @@ sub _set_handler {
                 block     => sub {
                     my ( $context, @args ) = @_;
                     for ( my $i = 1 ; $i <= scalar(@keys) ; $i++ ) {
-                        my $key = $keys[$i-1];
+                        my $key = $keys[ $i - 1 ];
                         next if $key eq '_ignore';
                         eval "\$context->req->param($key => \$$i)";
                     }
-                    $code->($context, @args);
+                    $code->( $context, @args );
                 },
             )
         );
@@ -204,8 +202,23 @@ sub _set_template {
 
 sub run {
     my ( $self, $env ) = @_;
-    my $context    = Asagao::Context->new( { app => $self, req => Plack::Request->new($env) } );
-    my $disp_attr  = lc( $context->req->method ) . '_dispatcher';
+    if ( $env->{REQUEST_METHOD} eq 'OPTIONS' ) {
+        return [ 200, [ Allow => 'GET, HEAD, POST, OPTIONS' ], [] ];
+    }
+    else {
+        my $context = Asagao::Context->new( { app => $self, req => Plack::Request->new($env) } );
+        $self->dispatch($context);
+        $context->status(200)               unless $context->status;
+        $context->content_type('text/html') unless $context->content_type;
+        return $context->finalize;
+    }
+}
+
+sub dispatch {
+    my ( $self, $context ) = @_;
+    my $request_method = $context->req->method;
+    my $disp_attr      = lc($request_method) . '_dispatcher';
+    $disp_attr = 'get_dispatcher' if $request_method eq 'HEAD';
     my $dispatcher = $self->$disp_attr();
     local $@;
     eval {
@@ -228,9 +241,6 @@ sub run {
         $context->status(500);
         carp($@);
     }
-    $context->status(200)               unless $context->status;
-    $context->content_type('text/html') unless $context->content_type;
-    $context->finalize;
 }
 
 sub _build_template_mt {
@@ -259,6 +269,36 @@ sub mt {
         }
     }
     my $content = $self->template_mt->$method( $tmpl, $args );
+    utf8::encode($content);
+    $content;
+}
+
+sub _build_template_tt {
+    my $self = shift;
+    Asagao::Template::TT->use or croak $@;
+    Asagao::Template::TT->new(
+        {
+            include_path  => $self->config->{template}->{include_path},
+            template_args => {
+                %{ $self->config->{template}->{template_args} || {} },
+                base_path => $self->base_path,
+            },
+        }
+    );
+}
+
+sub tt {
+    my ( $self, $tmpl, $args ) = @_;
+    my $method = ( $tmpl =~ m{^:[[:alnum:]_\-/]+$} ) ? 'render' : 'render_inline';
+    if ( $method eq 'render' ) {
+        $tmpl =~ s/^://;
+        if ( $self->infile_templates->{$tmpl}
+            && !$self->template_tt->exists_infile_template($tmpl) )
+        {
+            $self->template_tt->set_infile_template( $tmpl => $self->infile_templates->{$tmpl} );
+        }
+    }
+    my $content = $self->template_tt->$method( $tmpl, $args );
     utf8::encode($content);
     $content;
 }

@@ -22,8 +22,6 @@ sub import {
     };
     *{"$caller\::get"}       = \&Asagao::Default::get;
     *{"$caller\::post"}      = \&Asagao::Default::post;
-    *{"$caller\::put"}       = \&Asagao::Default::put;
-    *{"$caller\::delete"}    = \&Asagao::Default::delete;
     *{"$caller\::set"}       = \&Asagao::Default::set;
     *{"$caller\::template"}  = \&Asagao::Default::template;
     *{"$caller\::not_found"} = sub (&) {

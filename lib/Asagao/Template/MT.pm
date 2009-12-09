@@ -4,9 +4,16 @@ use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
 with 'Asagao::Role::Template';
 
+use Asagao::Config;
 use Carp;
 use Text::MicroTemplate;
 use Text::MicroTemplate::Extended;
+
+has config => (
+    is      => 'ro',
+    isa     => 'Asagao::Config',
+    default => sub { Asagao::Config->instance },
+);
 
 has template_options => (
     is      => 'ro',
@@ -23,7 +30,11 @@ has template_options => (
 has use_cache => (
     is      => 'rw',
     isa     => 'Bool',
-    default => 0,
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        $self->config->template_use_cache;
+    },
 );
 
 has cache => (
@@ -39,12 +50,6 @@ has cache => (
     },
 );
 
-has template_args => (
-    is      => 'ro',
-    isa     => 'HashRef',
-    default => sub { +{} },
-);
-
 has infile_templates => (
     metaclass => 'Collection::Hash',
     is        => 'ro',
@@ -58,37 +63,31 @@ has infile_templates => (
     },
 );
 
-has include_path => (
-    metaclass => 'Collection::Array',
-    is        => 'rw',
-    isa       => 'ArrayRef[Str]',
-    lazy      => 1,
-    default   => sub { ['views'] },
-    provides  => {
-        push   => 'add_path',
-        pop    => 'remove_last_path',
-        get    => 'get_path',
-        set    => 'set_path',
-        insert => 'insert_path',
-    },
+has mt => (
+    is         => 'ro',
+    isa        => 'Text::MicroTemplate::Extended',
+    lazy_build => 1,
 );
 
-sub render_inline {
-    my ( $self, $tmpl, $args ) = @_;
-    $self->set_infile_template( "inline::$tmpl" => $tmpl );
-    $self->render_infile( "inline::$tmpl", $args );
+sub _build_mt {
+    my $self = shift;
+    Text::MicroTemplate::Extended->new(
+        %{ $self->template_options },
+        use_cache    => $self->use_cache,
+        include_path => Asagao::Config->instance->template_include_path,
+    );
 }
 
 sub render_infile {
     my ( $self, $label, $args ) = @_;
     my $cache_key;
     my $renderer;
-    my %template_args = %{ $self->template_args };
+    my %template_args = %{ $self->config->template_args };
     foreach my $key ( keys %{ $args || {} } ) {
         $template_args{$key} = $args->{$key};
     }
     if ( $self->use_cache ) {
-        $cache_key = join( ':', 'infile', $label, keys(%template_args) );
+        $cache_key = join( ':', $label, keys(%template_args) );
         $renderer = $self->get_cache($cache_key);
     }
     unless ($renderer) {
@@ -97,7 +96,7 @@ sub render_infile {
         my $code   = $mt->code;
         my $setter = '';
         $setter .= join( '', map { "my \$$_ = shift;" } keys(%template_args) );
-        $renderer = eval "sub { $setter; $code->() }" or croak $@; ## no critic
+        $renderer = eval "sub { $setter; $code->() }" or croak $@;    ## no critic
         $self->set_cache( $cache_key => $renderer ) if $self->use_cache;
     }
     $renderer->( values(%template_args) );
@@ -105,28 +104,9 @@ sub render_infile {
 
 sub render_file {
     my ( $self, $file, $args ) = @_;
-    my $mt;
-    my $cache_key;
     my %template_args = ref($args) eq 'HASH' ? %$args : ();
-    if ( $self->use_cache ) {
-        $cache_key = join( ':', $file, keys %template_args );
-        $mt = $self->get_cache($cache_key);
-
-    }
-    if ($mt) {
-        foreach my $key ( keys %template_args ) {
-            $mt->template_args->{$key} = $template_args{$key};
-        }
-    }
-    else {
-        $mt = Text::MicroTemplate::Extended->new(
-            %{ $self->template_options },
-            use_cache     => $self->use_cache,
-            include_path  => $self->include_path,
-            template_args => { %{ $self->template_args }, %template_args },
-        );
-        $self->set_cache( $cache_key => $mt ) if $self->use_cache;
-    }
+    my $mt = $self->mt;
+    $mt->template_args( { %{ $self->config->template_args }, %template_args } );
     return $mt->render($file);
 }
 

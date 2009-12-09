@@ -265,13 +265,7 @@ sub _build_template_mt {
     my $self   = shift;
     my $config = Asagao::Config->instance;
     Asagao::Template::MT->use or croak $@;
-    Asagao::Template::MT->new(
-        {
-            include_path => $config->template_include_path,
-            template_args =>
-              { %{ $config->template_args || {} }, base_path => $config->base_path, },
-        }
-    );
+    Asagao::Template::MT->new( { config => $config, } );
 }
 
 sub mt {

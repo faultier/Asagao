@@ -4,6 +4,7 @@ plan skip_all => 'Text::MicroTemplate::Extended is not installed.' if $@;
 
 plan tests => 5;
 
+use Asagao::Config;
 use_ok 'Asagao::Template::MT';
 my $mt;
 
@@ -34,7 +35,8 @@ my $mt;
 }
 
 {
-    $mt = Asagao::Template::MT->new( { include_path => ['t/sample/views'] } );
+    Asagao::Config->instance->template_include_path(['t/sample/views']);
+    $mt = Asagao::Template::MT->new;
     is $mt->render('hello', { name => 'Taro' } ), "Hello, Taro.\n";
     $mt = undef;
 }

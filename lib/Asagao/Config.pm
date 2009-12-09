@@ -26,16 +26,24 @@ sub template_include_path {
         croak 'include_path required ArrayRef' unless ref($value) eq 'ARRAY';
         $self->_template->{include_path} = $value;
     }
-    $self->_template->{include_path};
+    $self->_template->{include_path} ||= [];
 }
 
 sub template_args {
     my ( $self, $value ) = @_;
     if ($value) {
-        croak 'include_path required HashRef' unless ref($value) eq 'HASH';
+        croak 'args required HashRef' unless ref($value) eq 'HASH';
         $self->_template->{args} = $value;
     }
-    $self->_template->{args};
+    $self->_template->{args} ||= {};
+}
+
+sub template_use_cache {
+    my ( $self, $value ) = @_;
+    if ($value) {
+        $self->_template->{use_cache} = $value;
+    }
+    $self->_template->{use_cache};
 }
 
 no Any::Moose;

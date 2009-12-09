@@ -4,6 +4,7 @@ use Any::Moose;
 use Any::Moose 'X::AttributeHelpers';
 with 'Asagao::Role::Template';
 
+use Asagao::Config;
 use Carp;
 use Template;
 
@@ -73,13 +74,6 @@ has tt => (
         );
     },
 );
-
-sub render_inline {
-    my ( $self, $tmpl, $args ) = @_;
-    my $output;
-    $self->tt->process( \$tmpl, $args, \$output );
-    $output;
-}
 
 sub render_infile {
     my ( $self, $label, $args ) = @_;

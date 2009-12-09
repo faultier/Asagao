@@ -1,7 +1,6 @@
 package Asagao::Role::Template;
 use Any::Moose '::Role';
 
-requires 'render_inline';
 requires 'render_infile';
 requires 'render_file';
 
@@ -15,6 +14,12 @@ sub render {
         $result = $self->render_file($name, $args);
     }
     return $result;
+}
+
+sub render_inline {
+    my ( $self, $tmpl, $args ) = @_;
+    $self->set_infile_template( "inline::$tmpl" => $tmpl );
+    $self->render_infile( "inline::$tmpl", $args );
 }
 
 'ASAGAO';

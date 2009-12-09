@@ -23,7 +23,7 @@ lib/Asagao/Config.pm
 lib/Asagao/Context.pm
 lib/Asagao/Default.pm
 lib/Asagao/Role/Singleton.pm
-lib/Asagao/Template.pm
+lib/Asagao/Role/Template.pm
 lib/Asagao/Template/MT.pm
 lib/Asagao/Template/TT.pm
 Makefile.PL

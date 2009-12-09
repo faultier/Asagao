@@ -3,6 +3,7 @@ name 'Asagao';
 all_from 'lib/Asagao.pm';
 
 requires 'Any::Moose' => '0.10';
+requires 'MouseX::AttributeHelpers' => '0.04';
 requires 'Path::Dispatcher';
 requires 'Plack' => '0.9008';
 requires 'Plack::Request';
@@ -13,10 +14,6 @@ features(
     'Support MicroTemplate template engine' => [
         -default => 1,
         recommends( 'Text::MicroTemplate::Extended' => '0.05' ),
-    ],
-    'Use Mouse' => [
-        -default => 1,
-        recommends( 'MouseX::AttributeHelpers' => '0.04' ),
     ],
     'Use Moose' => [
         -default => 0,

@@ -65,9 +65,8 @@ sub _build_tt {
     );
 }
 
-sub render_infile {
-    my ( $self, $label, $args ) = @_;
-    my $input = $self->get_infile_template($label);
+sub render_inline {
+    my ( $self, $input, $args ) = @_;
     my $output;
     $self->tt->process( \$input, $args, \$output );
     $output;

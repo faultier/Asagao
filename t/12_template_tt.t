@@ -1,6 +1,6 @@
 use Test::More;
 
-plan tests => 5;
+plan tests => 4;
 
 use_ok 'Asagao::Template::TT';
 my $tt;
@@ -18,15 +18,8 @@ my $tt;
 }
 
 {
-    $tt = Asagao::Template::TT->new;
-    $tt->set_infile_template( hi => 'Hi, <% name %>.' );
-    is $tt->render( 'hi', { name => 'Taro' } ), 'Hi, Taro.';
-    $tt = undef;
-}
-
-{
     Asagao::Config->instance->template_include_path( ['t/sample/views'] );
     $tt = Asagao::Template::TT->new( { include_path => ['t/sample/views'] } );
-    is $tt->render( 'hello', { name => 'Taro' } ), "Hello, Taro.\n";
+    is $tt->render_file( 'hello', { name => 'Taro' } ), "Hello, Taro.\n";
     $tt = undef;
 }

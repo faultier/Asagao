@@ -50,19 +50,6 @@ has cache => (
     },
 );
 
-has infile_templates => (
-    metaclass => 'Collection::Hash',
-    is        => 'ro',
-    isa       => 'HashRef',
-    default   => sub { +{} },
-    provides  => {
-        get    => 'get_infile_template',
-        set    => 'set_infile_template',
-        clear  => 'clear_infile_template',
-        exists => 'exists_infile_template',
-    },
-);
-
 has mt => (
     is         => 'ro',
     isa        => 'Text::MicroTemplate::Extended',
@@ -78,21 +65,20 @@ sub _build_mt {
     );
 }
 
-sub render_infile {
-    my ( $self, $label, $args ) = @_;
+sub render_inline {
+    my ( $self, $tmpl, $args, $label ) = @_;
     my $cache_key;
     my $renderer;
     my %template_args = %{ $self->config->template_args };
     foreach my $key ( keys %{ $args || {} } ) {
         $template_args{$key} = $args->{$key};
     }
-    if ( $self->use_cache ) {
+    if ( $self->use_cache && $label ) {
         $cache_key = join( ':', $label, keys(%template_args) );
         $renderer = $self->get_cache($cache_key);
     }
     unless ($renderer) {
-        my $mt = Text::MicroTemplate->new( %{ $self->template_options },
-            template => $self->get_infile_template($label), );
+        my $mt     = Text::MicroTemplate->new( %{ $self->template_options }, template => $tmpl, );
         my $code   = $mt->code;
         my $setter = '';
         $setter .= join( '', map { "my \$$_ = shift;" } keys(%template_args) );

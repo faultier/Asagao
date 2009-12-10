@@ -268,49 +268,40 @@ sub _build_template_mt {
     Asagao::Template::MT->new( { config => $config, } );
 }
 
-sub mt {
-    my ( $self, $tmpl, $args ) = @_;
-    my $method = ( $tmpl =~ m{^:[[:alnum:]_\-/]+$} ) ? 'render' : 'render_inline';
-    if ( $method eq 'render' ) {
-        $tmpl =~ s/^://;
-        if ( $self->infile_templates->{$tmpl}
-            && !$self->template_mt->exists_infile_template($tmpl) )
-        {
-            $self->template_mt->set_infile_template( $tmpl => $self->infile_templates->{$tmpl} );
-        }
-    }
-    my $content = $self->template_mt->$method( $tmpl, $args );
-    utf8::encode($content);
-    $content;
-}
-
 sub _build_template_tt {
     my $self   = shift;
     my $config = Asagao::Config->instance;
     Asagao::Template::TT->use or croak $@;
-    Asagao::Template::TT->new(
-        {
-            include_path => $config->template_include_path,
-            template_args =>
-              { %{ $config->template_args || {} }, base_path => $config->base_path, },
+    Asagao::Template::TT->new( { config => $config, } );
+}
+
+sub _render {
+    my ( $self, $renderer, $tmpl, $args ) = @_;
+    my $content;
+    if ( $tmpl =~ m{^:([[:alnum:]_\-/]+)$} ) {
+        $tmpl = $1;
+        if ( $self->infile_templates->{$tmpl} ) {
+            $content = $renderer->render_inline( $self->infile_templates->{$tmpl}, $args, $tmpl );
         }
-    );
+        else {
+            $content = $renderer->render_file( $tmpl, $args );
+        }
+    }
+    else {
+        $content = $renderer->render_inline( $tmpl, $args );
+    }
+    utf8::encode($content);
+    $content;
+}
+
+sub mt {
+    my ( $self, $tmpl, $args ) = @_;
+    $self->_render( $self->template_mt, $tmpl, $args );
 }
 
 sub tt {
     my ( $self, $tmpl, $args ) = @_;
-    my $method = ( $tmpl =~ m{^:[[:alnum:]_\-/]+$} ) ? 'render' : 'render_inline';
-    if ( $method eq 'render' ) {
-        $tmpl =~ s/^://;
-        if ( $self->infile_templates->{$tmpl}
-            && !$self->template_tt->exists_infile_template($tmpl) )
-        {
-            $self->template_tt->set_infile_template( $tmpl => $self->infile_templates->{$tmpl} );
-        }
-    }
-    my $content = $self->template_tt->$method( $tmpl, $args );
-    utf8::encode($content);
-    $content;
+    $self->_render( $self->template_tt, $tmpl, $args );
 }
 
 no Any::Moose;

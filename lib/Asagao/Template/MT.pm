@@ -74,7 +74,7 @@ sub _build_mt {
     Text::MicroTemplate::Extended->new(
         %{ $self->template_options },
         use_cache    => $self->use_cache,
-        include_path => Asagao::Config->instance->template_include_path,
+        include_path => $self->config->template_include_path,
     );
 }
 

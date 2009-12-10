@@ -25,6 +25,7 @@ my $tt;
 }
 
 {
+    Asagao::Config->instance->template_include_path( ['t/sample/views'] );
     $tt = Asagao::Template::TT->new( { include_path => ['t/sample/views'] } );
     is $tt->render( 'hello', { name => 'Taro' } ), "Hello, Taro.\n";
     $tt = undef;

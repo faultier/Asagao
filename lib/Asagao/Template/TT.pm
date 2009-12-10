@@ -8,6 +8,12 @@ use Asagao::Config;
 use Carp;
 use Template;
 
+has config => (
+    is      => 'ro',
+    isa     => 'Asagao::Config',
+    default => sub { Asagao::Config->instance },
+);
+
 has template_options => (
     is      => 'ro',
     isa     => 'HashRef',
@@ -22,13 +28,11 @@ has template_options => (
 has use_cache => (
     is      => 'rw',
     isa     => 'Bool',
-    default => 0,
-);
-
-has template_args => (
-    is      => 'ro',
-    isa     => 'HashRef',
-    default => sub { +{} },
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        $self->config->template_use_cache;
+    },
 );
 
 has infile_templates => (
@@ -44,36 +48,22 @@ has infile_templates => (
     },
 );
 
-has include_path => (
-    metaclass => 'Collection::Array',
-    is        => 'rw',
-    isa       => 'ArrayRef[Str]',
-    lazy      => 1,
-    default   => sub { ['views'] },
-    provides  => {
-        push   => 'add_path',
-        pop    => 'remove_last_path',
-        get    => 'get_path',
-        set    => 'set_path',
-        insert => 'insert_path',
-    },
+has tt => (
+    is         => 'ro',
+    isa        => 'Template',
+    lazy_build => 1,
 );
 
-has tt => (
-    is      => 'ro',
-    isa     => 'Template',
-    lazy    => 1,
-    default => sub {
-        my $self = shift;
-        Template->new(
-            {
-                %{ $self->template_options },
-                CACHE_SIZE => $self->use_cache ? undef : 0,
-                INCLUDE_PATH => $self->include_path,
-            }
-        );
-    },
-);
+sub _build_tt {
+    my $self = shift;
+    Template->new(
+        {
+            %{ $self->template_options },
+            CACHE_SIZE => $self->use_cache ? undef : 0,
+            INCLUDE_PATH => $self->config->template_include_path,
+        }
+    );
+}
 
 sub render_infile {
     my ( $self, $label, $args ) = @_;

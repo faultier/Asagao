@@ -20,7 +20,7 @@ has app => (
     is       => 'ro',
     isa      => 'Asagao::Base',
     required => 1,
-    handles  => [qw(mt)],
+    handles  => [qw(render)],
     weak_ref => 1,
 );
 

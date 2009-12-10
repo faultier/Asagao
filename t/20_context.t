@@ -33,8 +33,8 @@ sub create_context {
 
 {
     my $ctx = create_context();
-    can_ok( $ctx, qw(mt) );
-    is $ctx->mt( 'Hi, <%= $name %>.', { name => 'Taro' } ), 'Hi, Taro.';
-    is $ctx->mt( ':hello',            { name => 'Taro' } ), "Hello, Taro.\n";
-    is $ctx->mt( ':gutentag',         { name => 'Taro' } ), 'Guten Tag, Taro.';
+    can_ok( $ctx, qw(render) );
+    is $ctx->render( 'Hi, <%= $name %>.', { name => 'Taro' } ), 'Hi, Taro.';
+    is $ctx->render( ':hello',            { name => 'Taro' } ), "Hello, Taro.\n";
+    is $ctx->render( ':gutentag',         { name => 'Taro' } ), 'Guten Tag, Taro.';
 }

@@ -16,14 +16,17 @@ extends( any_moose('::Object'), 'Class::Data::Inheritable' );
 __PACKAGE__->mk_classdata( $_ . '_dispatcher' ) foreach qw(get post);
 __PACKAGE__->mk_classdata( infile_templates => {} );
 
-has template_mt => (
-    is         => 'ro',
-    lazy_build => 1,
+has config => (
+    is      => 'ro',
+    isa     => 'Asagao::Config',
+    default => sub { Asagao::Config->instance },
 );
 
-has template_tt => (
+has template_engine => (
     is         => 'ro',
+    does       => 'Asagao::Role::Template',
     lazy_build => 1,
+    handles    => [qw(render_inline render_file)],
 );
 
 sub init_class {
@@ -191,6 +194,9 @@ sub _set_option {
     elsif ( $key eq 'base_path' ) {
         $config->base_path($value);
     }
+    elsif ( $key eq 'template_engine' ) {
+        $config->template_class($value); 
+    }
 }
 
 sub _set_template {
@@ -262,46 +268,40 @@ sub dispatch {
 }
 
 sub _build_template_mt {
-    my $self   = shift;
-    my $config = Asagao::Config->instance;
+    my $self = shift;
     Asagao::Template::MT->use or croak $@;
-    Asagao::Template::MT->new( { config => $config, } );
+    Asagao::Template::MT->new( { config => $self->config, } );
 }
 
 sub _build_template_tt {
-    my $self   = shift;
-    my $config = Asagao::Config->instance;
+    my $self = shift;
     Asagao::Template::TT->use or croak $@;
-    Asagao::Template::TT->new( { config => $config, } );
+    Asagao::Template::TT->new( { config => $self->config, } );
 }
 
-sub _render {
-    my ( $self, $renderer, $tmpl, $args ) = @_;
+sub _build_template_engine {
+    my $self = shift;
+    $self->config->template_class->use or croak $@;
+    $self->config->template_class->new( { config => $self->config, } );
+}
+
+sub render {
+    my ( $self, $tmpl, $args ) = @_;
     my $content;
     if ( $tmpl =~ m{^:([[:alnum:]_\-/]+)$} ) {
         $tmpl = $1;
         if ( $self->infile_templates->{$tmpl} ) {
-            $content = $renderer->render_inline( $self->infile_templates->{$tmpl}, $args, $tmpl );
+            $content = $self->render_inline( $self->infile_templates->{$tmpl}, $args, $tmpl );
         }
         else {
-            $content = $renderer->render_file( $tmpl, $args );
+            $content = $self->render_file( $tmpl, $args );
         }
     }
     else {
-        $content = $renderer->render_inline( $tmpl, $args );
+        $content = $self->render_inline( $tmpl, $args );
     }
     utf8::encode($content);
     $content;
-}
-
-sub mt {
-    my ( $self, $tmpl, $args ) = @_;
-    $self->_render( $self->template_mt, $tmpl, $args );
-}
-
-sub tt {
-    my ( $self, $tmpl, $args ) = @_;
-    $self->_render( $self->template_tt, $tmpl, $args );
 }
 
 no Any::Moose;

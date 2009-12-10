@@ -14,37 +14,29 @@ has static_path => (
     isa => 'Str',
 );
 
-has _template => (
+has template_class => (
     is      => 'rw',
-    isa     => 'HashRef',
-    default => sub { {} },
+    isa     => 'Str',
+    default => sub { 'Asagao::Template::MT' },
 );
 
-sub template_include_path {
-    my ( $self, $value ) = @_;
-    if ($value) {
-        croak 'include_path required ArrayRef' unless ref($value) eq 'ARRAY';
-        $self->_template->{include_path} = $value;
-    }
-    $self->_template->{include_path} ||= [];
-}
+has template_include_path => (
+    is      => 'rw',
+    isa     => 'ArrayRef',
+    default => sub { +[qw(views)] },
+);
 
-sub template_args {
-    my ( $self, $value ) = @_;
-    if ($value) {
-        croak 'args required HashRef' unless ref($value) eq 'HASH';
-        $self->_template->{args} = $value;
-    }
-    $self->_template->{args} ||= {};
-}
+has template_args => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { +{} },
+);
 
-sub template_use_cache {
-    my ( $self, $value ) = @_;
-    if ($value) {
-        $self->_template->{use_cache} = $value;
-    }
-    $self->_template->{use_cache};
-}
+has template_use_cache => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+);
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;

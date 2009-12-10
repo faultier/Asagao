@@ -1,4 +1,4 @@
-use Test::More tests => 30;
+use Test::More tests => 32;
 use HTTP::Request::Common;
 use HTTP::Message::PSGI;
 
@@ -115,5 +115,10 @@ my $app = TestApp->new();
 }
 
 {
-    can_ok( $app, qw(mt tt) );
+    can_ok( $app, qw(render) );
+    $app = TestApp->new;
+    is $app->render( 'Hi, <%= $name %>.', { name => 'Taro' } ), 'Hi, Taro.';
+    TestApp::set template_engine => 'Asagao::Template::TT';
+    $app = TestApp->new;
+    is $app->render( 'Hi, <% name | html %>.', { name => 'Taro' } ), 'Hi, Taro.';
 }

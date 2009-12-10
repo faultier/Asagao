@@ -11,7 +11,7 @@ get '/' => sub {
 
 get '/in-file-template' => sub {
     my $self = shift;
-    $self->mt( ':infile', { name => 'Taro' } );
+    $self->render( ':infile', { name => 'Taro' } );
 };
 
 get '/wildcard/*' => sub {
@@ -20,7 +20,7 @@ get '/wildcard/*' => sub {
 
 get '/namedparam/:name' => sub {
     my $self = shift;
-    $self->mt( '<%= $name %>', { name => $self->param('name') });
+    $self->render( '<%= $name %>', { name => $self->param('name') });
 };
 
 post qr{^/regex/[0-9]$} => sub {

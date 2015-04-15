@@ -195,7 +195,7 @@ sub _set_option {
         $config->base_path($value);
     }
     elsif ( $key eq 'template_engine' ) {
-        $config->template_class($value); 
+        $config->template_class($value);
     }
 }
 
